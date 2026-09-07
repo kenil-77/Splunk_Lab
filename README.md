@@ -408,25 +408,22 @@ index=* sourcetype=auditd type=PROCTITLE
 
 ## Repository Layout
 
-splunk-soc-lab/
-├── README.md
-├── LICENSE
-├── tickets/ Tier 1 triage tickets
-│ ├── T1-ssh-bruteforce.md
-│ ├── T1-webapp-compromise.md
-│ └── T1-linux-privesc.md
-├── reports/ Tier 2 incident reports
-│ ├── T2-ssh-bruteforce.md
-│ ├── T2-webapp-compromise.md
-│ └── T2-linux-privesc.md
-├── screenshots/ Splunk output proving each finding
-│ ├── ssh/ (Investigation 1)
-│ ├── botsv1/ (Investigation 2)
-│ └── privesc/ (Investigation 3)
-└── queries/ Reusable SPL saved-search definitions
-├── ssh-detections.spl
-├── botsv1-detections.spl
-└── privesc-detections.spl
+            splunk-soc-lab/
+            ├── README.md
+            ├── LICENSE
+            ├── tickets/ Tier 1 triage tickets
+            │ ├── T1-ssh-bruteforce.md
+            │ ├── T1-webapp-compromise.md
+            │ └── T1-linux-privesc.md
+            ├── reports/ Tier 2 incident reports
+            │ ├── T2-ssh-bruteforce.md
+            │ ├── T2-webapp-compromise.md
+            │ └── T2-linux-privesc.md
+            ├── screenshots
+            ├── queries/ Reusable SPL saved-search definitions
+            | ├── ssh-detections.spl
+            | ├── botsv1-detections.spl
+            | └── privesc-detections.spl
 
 ---
 
