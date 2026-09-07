@@ -9,37 +9,37 @@ A self-built Security Operations Center (SOC) home lab running Splunk Enterprise
 When an alert fires in a real SOC, the analyst has minutes to decide "is this real?" and hours to answer "what actually happened, what's the scope, how do we contain it?" This lab practices exactly that workflow, three times, across three different attack categories.
 
 ## Architecture
-┌────────────────────────────────────────────────────────────────┐
-│                                                                │
-│   Kali Linux (rolling)                                         │
-│                                                                │
-│   Splunk Enterprise 10.4.3                                     │
-│   Installed at /opt/splunk                                     │
-│   Web UI: http://127.0.0.1:8000                                │
-│          │                                                     │
-│          │ Three indexes created                               │
-│          │                                                     │
-│    ──────┼──────────────────────                               │
-│          │            │            │                           │
-│          ▼            ▼            ▼                           │
-│      ssh_lab       botsv1      attack_data                     │
-│      index         index       index                           │
-│          │            │            │                           │
-│          ▼            ▼            ▼                           │
-│      SecRepo       BOTSv1      Splunk                          │
-│      auth.log      dataset     attack_data                     │
-│      86,839        955,807     108 events                      │
-│      events        events                                      │
-│          │            │            │                           │
-│          ▼            ▼            ▼                           │
-│      Invest #1    Invest #2    Invest #3                       │
-│      SSH brute-   Web-app      Linux privilege                 │
-│      force        compromise   escalation                      │
-│          │            │            │                           │
-│          ▼            ▼            ▼                           │
-│      Tier 1 Ticket + Tier 2 Report + Detection Rules           │
-│                                                                │
-└────────────────────────────────────────────────────────────────┘
+            ┌────────────────────────────────────────────────────────────────┐
+            │                                                                │
+            │   Kali Linux (rolling)                                         │
+            │                                                                │
+            │   Splunk Enterprise 10.4.3                                     │
+            │   Installed at /opt/splunk                                     │
+            │   Web UI: http://127.0.0.1:8000                                │
+            │          │                                                     │
+            │          │ Three indexes created                               │
+            │          │                                                     │
+            │    ──────┼──────────────────────                               │
+            │          │            │            │                           │
+            │          ▼            ▼            ▼                           │
+            │      ssh_lab       botsv1      attack_data                     │
+            │      index         index       index                           │
+            │          │            │            │                           │
+            │          ▼            ▼            ▼                           │
+            │      SecRepo       BOTSv1      Splunk                          │
+            │      auth.log      dataset     attack_data                     │
+            │      86,839        955,807     108 events                      │
+            │      events        events                                      │
+            │          │            │            │                           │
+            │          ▼            ▼            ▼                           │
+            │      Invest #1    Invest #2    Invest #3                       │
+            │      SSH brute-   Web-app      Linux privilege                 │
+            │      force        compromise   escalation                      │
+            │          │            │            │                           │
+            │          ▼            ▼            ▼                           │
+            │      Tier 1 Ticket + Tier 2 Report + Detection Rules           │
+            │                                                                │
+            └────────────────────────────────────────────────────────────────┘
 
 ## Tools Used
 
