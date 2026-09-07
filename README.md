@@ -41,7 +41,6 @@ When an alert fires in a real SOC, the analyst has minutes to decide "is this re
 │                                                                │
 └────────────────────────────────────────────────────────────────┘
 
-
 ## Tools Used
 
 | Tool | Version | Purpose |
