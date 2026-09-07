@@ -1,0 +1,73 @@
+# =========================================================================
+# Linux Privilege Escalation Detection Queries
+# Dataset: Splunk attack_data T1548.003 (linux_auditd_sudo_su.log)
+# Index: attack_data | Sourcetype: auditd
+# Attack date: 2024-08-06
+# =========================================================================
+
+# --- TIER 1 ---
+
+# T1.1 - All sudo activity (baseline)
+index=attack_data sourcetype=auditd type=PROCTITLE proctitle=*7375646F*
+| stats count by proctitle
+
+# T1.2 - Command inventory (top 5 unique commands, decoded manually)
+index=attack_data sourcetype=auditd type=PROCTITLE
+| stats count by proctitle
+| sort -count
+
+# --- TIER 2 ---
+
+# T2.1 - Chronological command sequence (attacker methodology)
+index=attack_data sourcetype=auditd type=PROCTITLE
+| table _time, proctitle
+| sort _time
+| head 30
+
+# T2.2 - Phase-by-phase timeline (10-second buckets)
+index=attack_data sourcetype=auditd type=PROCTITLE
+| bin _time span=10s
+| stats count by _time, proctitle
+| sort _time
+
+# T2.3 - Attack duration calculation
+index=attack_data sourcetype=auditd type=PROCTITLE
+| stats min(_time) as start_time max(_time) as end_time
+| eval duration_seconds=end_time-start_time
+| eval duration_minutes=round(duration_seconds/60, 2)
+| eval start_time=strftime(start_time,"%Y-%m-%d %H:%M:%S")
+| eval end_time=strftime(end_time,"%Y-%m-%d %H:%M:%S")
+| table start_time, end_time, duration_seconds, duration_minutes
+
+# T2.4 - MITRE-mapped kill-chain visualization
+index=attack_data sourcetype=auditd type=PROCTITLE
+| eval technique=case(
+    match(proctitle, "61756469746400.*73657276696365"), "T1518 Recon: auditd",
+    match(proctitle, "53706C756E6B466F72776172"), "T1518 Recon: Splunk",
+    match(proctitle, "2F6F70742F73706C756E6B666F72"), "T1562 Evasion: Splunk restart",
+    match(proctitle, "63686D6F6400752B7300"), "T1548.001 Persist: SUID",
+    match(proctitle, "73657463617000"), "T1548.003 Persist: setcap"
+)
+| timechart span=30s count by technique useother=f
+
+# --- DETECTION-ENGINEERING RECOMMENDATIONS ---
+
+# Alert: setcap on non-standard paths (T1548.003)
+index=* sourcetype=auditd type=PROCTITLE proctitle=*7365746361700063*
+  NOT proctitle=*2F7573722F62696E2F* NOT proctitle=*2F7573722F7362696E2F*
+| stats count by host, proctitle
+
+# Alert: SUID bit being set (T1548.001)
+index=* sourcetype=auditd type=PROCTITLE proctitle=*63686D6F6400*
+  (proctitle=*752B7300* OR proctitle=*343735* OR proctitle=*343730*)
+| stats count by host, proctitle
+
+# Correlation alert: recon + persistence within 5 minutes on same host
+index=* sourcetype=auditd type=PROCTITLE
+| eval technique=case(
+    match(proctitle, "73797374656D63746C.*61756469746400"), "recon",
+    match(proctitle, "73657463617000"), "persistence"
+)
+| where isnotnull(technique)
+| stats values(technique) as techniques by host, bin(_time, 5m)
+| where mvcount(techniques) > 1

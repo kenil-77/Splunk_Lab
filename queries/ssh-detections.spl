@@ -1,0 +1,68 @@
+# =========================================================================
+# SSH Brute-Force Detection Queries
+# Dataset: SecRepo auth.log (Nov-Dec 2014)
+# Index: ssh_lab | Sourcetype: linux_secure
+# =========================================================================
+
+# --- TIER 1 ---
+
+# T1.1 - Top attacker IPs by connection count
+index=ssh_lab process=sshd
+| rex "from (?<src_ip>\d+\.\d+\.\d+\.\d+)"
+| stats count by src_ip
+| sort -count
+| head 10
+
+# T1.2 - Most-targeted usernames (from Invalid user events)
+index=ssh_lab "Invalid user"
+| rex "Invalid user (?<attempted_user>\S+) from"
+| stats count by attempted_user
+| sort -count
+| head 10
+
+# T1.3 - Geolocate top attackers
+index=ssh_lab process=sshd
+| rex "from (?<src_ip>\d+\.\d+\.\d+\.\d+)"
+| stats count by src_ip
+| iplocation src_ip
+| table src_ip, count, Country, City
+| sort -count
+| head 10
+
+# --- TIER 2 ---
+
+# T2.1 - Compromise check (any successful SSH auth?)
+index=ssh_lab process=sshd (Accepted OR "session opened")
+| rex "for (?<user>\S+) from (?<src_ip>\d+\.\d+\.\d+\.\d+)"
+| stats count values(user) as users values(src_ip) as source_ips by process
+
+# T2.2 - Attack velocity (identify bot vs human)
+index=ssh_lab process=sshd
+| rex "from (?<src_ip>\d+\.\d+\.\d+\.\d+)"
+| timechart span=1h count by src_ip limit=5 useother=f
+
+# T2.3 - Dictionary size per attacker (sophistication assessment)
+index=ssh_lab "Invalid user"
+| rex "Invalid user (?<attempted_user>\S+) from (?<src_ip>\d+\.\d+\.\d+\.\d+)"
+| stats dc(attempted_user) as unique_users_tried count as total_attempts by src_ip
+| sort -total_attempts
+| head 10
+
+# T2.4 - Geographic distribution
+index=ssh_lab process=sshd
+| rex "from (?<src_ip>\d+\.\d+\.\d+\.\d+)"
+| iplocation src_ip
+| stats count dc(src_ip) as unique_ips by Country
+| sort -count
+
+# T2.5 - Campaign timeline (full month, daily)
+index=ssh_lab
+| timechart span=1d count
+
+# --- DETECTION-ENGINEERING RECOMMENDATION ---
+
+# Alert rule: any IP with >50 SSH events in last hour
+index=ssh_lab process=sshd earliest=-1h
+| rex "from (?<src_ip>\d+\.\d+\.\d+\.\d+)"
+| stats count by src_ip
+| where count > 50

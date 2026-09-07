@@ -1,0 +1,76 @@
+# =========================================================================
+# Web-App Compromise Detection Queries
+# Dataset: BOTSv1 (Splunk Boss of the SOC v1, 2016-08-10 attack)
+# Index: botsv1 | Sourcetype: stream:http, suricata
+# Target: imreallynotbatman.com (192.168.250.70)
+# =========================================================================
+
+# --- TIER 1 ---
+
+# T1.1 - Identify web scanner (many unique paths per IP)
+index=botsv1 sourcetype=stream:http imreallynotbatman.com
+| stats count dc(uri_path) as unique_paths by src_ip
+| sort -unique_paths
+| head 10
+
+# T1.2 - Identify login brute-forcer (POST spam)
+index=botsv1 sourcetype=stream:http http_method=POST dest_ip=192.168.250.70
+| stats count by src_ip
+| sort -count
+
+# T1.3 - Geolocate attacker
+index=botsv1 sourcetype=stream:http src_ip=23.22.63.114
+| head 1
+| iplocation src_ip
+| table src_ip, Country, City
+
+# --- TIER 2 ---
+
+# T2.1 - Extract all passwords tried by attacker B
+index=botsv1 sourcetype=stream:http http_method=POST dest_ip=192.168.250.70 form_data=*passwd* src_ip=23.22.63.114
+| rex field=form_data "passwd=(?<password>[^&]+)"
+| stats dc(password) as unique_passwords count as total_attempts by src_ip
+
+# T2.2 - Find the winning password (last chronological attempt)
+index=botsv1 sourcetype=stream:http http_method=POST dest_ip=192.168.250.70 form_data=*passwd* src_ip=23.22.63.114
+| rex field=form_data "passwd=(?<password>[^&]+)"
+| table _time, password
+| sort -_time
+| head 10
+
+# T2.3 - Verify successful login credentials
+index=botsv1 sourcetype=stream:http src_ip=40.80.148.42 "passwd=batman"
+| table _time, http_user_agent, form_data
+
+# T2.4 - User-Agent fingerprinting (identify tools)
+index=botsv1 sourcetype=stream:http src_ip=23.22.63.114
+| stats count by http_user_agent
+| sort -count
+
+index=botsv1 sourcetype=stream:http src_ip=40.80.148.42
+| stats count by http_user_agent
+| sort -count
+
+# T2.5 - Webshell timeline (agent.php first appearance)
+index=botsv1 sourcetype=stream:http uri_path=*/agent.php*
+| stats earliest(_time) as first_seen latest(_time) as last_seen count values(src_ip) as source_ips values(http_method) as methods by uri_path
+| eval first_seen=strftime(first_seen,"%Y-%m-%d %H:%M:%S")
+| eval last_seen=strftime(last_seen,"%Y-%m-%d %H:%M:%S")
+
+# T2.6 - Suricata IDS alerts summary
+index=botsv1 sourcetype=suricata
+| stats count by alert.signature
+| sort -count
+| head 20
+
+# T2.7 - Full attack timeline correlation (both attackers)
+index=botsv1 (src_ip=23.22.63.114 OR src_ip=40.80.148.42)
+| timechart span=1m count by src_ip useother=f
+
+# --- DETECTION-ENGINEERING RECOMMENDATION ---
+
+# Alert: successful admin login preceded by scanning from any nearby IP
+index=botsv1 sourcetype=stream:http src_ip=*
+| eval subnet=mvindex(split(src_ip,"."),0)."."mvindex(split(src_ip,"."),1)
+| stats dc(uri_path) as paths_probed values(src_ip) as attackers by subnet
+| where paths_probed > 100
