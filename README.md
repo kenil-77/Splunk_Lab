@@ -91,7 +91,8 @@ index=ssh_lab process=sshd
 
 Result: `61.197.203.243` (Japan, 11,261 events), `220.99.93.50` (Japan, 10,752), `218.25.17.234` (China, 5,616) topped the list.
 
-📸 ![Top SSH Attackers](screenshots/ssh/01_top_attacker_ips.png)
+<img width="959" height="383" alt="1" src="https://github.com/user-attachments/assets/bdd94ca5-4b3e-43e0-ab4d-f09ada1c607a" />
+
 
 **Geolocation of top attackers:**
 ```spl
@@ -103,7 +104,8 @@ index=ssh_lab process=sshd
 | sort -count | head 10
 ```
 
-📸 ![SSH Geolocation](screenshots/ssh/02_geolocation.png)
+<img width="956" height="392" alt="3" src="https://github.com/user-attachments/assets/b950a03f-3769-4fa4-b6d1-3a4bf571ca19" />
+
 
 **Verdict:** True Positive — sustained multi-source SSH abuse. Escalate to Tier 2.
 
@@ -124,15 +126,11 @@ index=ssh_lab "Invalid user"
 
 Result revealed **four IPs from three countries with identical 47-user / 409-attempt fingerprints** — mathematically impossible by coincidence. This is the signature of a distributed botnet running commodity brute-force tooling with a shared wordlist.
 
-📸 ![Coordinated Botnet Discovery](screenshots/ssh/05_dictionary_analysis.png)
+<img width="957" height="385" alt="6" src="https://github.com/user-attachments/assets/4fb47159-bf86-4a86-9c13-da58cd533652" />
 
 **Attack velocity chart** showed each top attacker's activity plotted across the month:
 
-📸 ![Attack Velocity](screenshots/ssh/04_velocity_chart.png)
-
-**Campaign timeline** revealed three attack phases across the month:
-
-📸 ![Campaign Timeline](screenshots/ssh/07_campaign_timeline.png)
+<img width="958" height="331" alt="8" src="https://github.com/user-attachments/assets/6470cfb0-c7c8-4896-9f23-5584a70199d4" />
 
 **MITRE ATT&CK Techniques:**
 - T1595.001 — Active Scanning: Scanning IP Blocks (~78,000 pre-auth SSH port scans)
@@ -171,7 +169,8 @@ index=botsv1 sourcetype=stream:http imreallynotbatman.com
 | sort -unique_paths | head 10
 ```
 
-📸 ![Attacker Identification](screenshots/botsv1/09_scanner_identification.png)
+<img width="956" height="337" alt="9" src="https://github.com/user-attachments/assets/db844209-ee59-4415-a6c7-0ec984f3dc45" />
+
 
 **Verdict:** True Positive — active reconnaissance + coordinated credential attack. Escalate immediately.
 
@@ -205,7 +204,8 @@ index=botsv1 sourcetype=stream:http src_ip=40.80.148.42 "passwd=batman"
 | table _time, http_user_agent, form_data
 ```
 
-📸 ![Successful Login](screenshots/botsv1/17_batman_login_confirmed.png)
+<img width="956" height="257" alt="14" src="https://github.com/user-attachments/assets/40aac42d-8b22-4c06-ab5f-1edfbcfdff63" />
+
 
 **Attacker tool fingerprinting via User-Agent injection payloads:**
 ```spl
@@ -216,7 +216,8 @@ index=botsv1 sourcetype=stream:http src_ip=40.80.148.42
 
 Revealed `acunetix_wvs_security_test` canary strings — **Acunetix WVS Free Edition** definitively identified. Payloads included SQL injection, command injection, PHP eval, template injection, XSS, and Shellshock (CVE-2014-6271) attempts.
 
-📸 ![Acunetix Fingerprinting](screenshots/botsv1/16_acunetix_useragents.png)
+<img width="955" height="381" alt="16" src="https://github.com/user-attachments/assets/d5e6dba0-8350-4e4b-9876-d9016fbc419f" />
+
 
 **Webshell activity — post-compromise operations:**
 - `/joomla/agent.php` first appeared 2016-08-10 17:55:22 (7 minutes after successful login)
@@ -230,7 +231,8 @@ index=botsv1 sourcetype=suricata
 | sort -count | head 20
 ```
 
-📸 ![Suricata Alerts](screenshots/botsv1/21_suricata_alerts.png)
+<img width="956" height="392" alt="18" src="https://github.com/user-attachments/assets/0c41b3c2-608a-4888-8af1-8cad2b234b3e" />
+
 
 Suricata independently identified the attacker: **`ET SCAN Acunetix Version 6 (Free Edition) Scan Detected`** — 45 alerts. Cross-validated our User-Agent analysis. Also caught 200+ injection attempts (XSS, SQLi, XXE, Shellshock, PHP injection).
 
@@ -242,7 +244,8 @@ index=botsv1 (src_ip=23.22.63.114 OR src_ip=40.80.148.42)
 | timechart span=1m count by src_ip useother=f
 ```
 
-📸 ![Attack Timeline](screenshots/botsv1/22_attack_timeline.png)
+<img width="959" height="385" alt="19" src="https://github.com/user-attachments/assets/aa22760a-3315-4edc-88c9-bfa52991393d" />
+
 
 The chart visually proves the coordinated handoff — Attacker A's Acunetix scan phases finish, Attacker B's brute-force burst begins, quiet period during compromise, then Attacker B's sustained webshell activity resumes.
 
@@ -277,7 +280,8 @@ index=attack_data sourcetype=auditd type=PROCTITLE
 | stats count by proctitle | sort -count
 ```
 
-📸 ![Command Inventory](screenshots/privesc/24_command_inventory.png)
+<img width="948" height="356" alt="23" src="https://github.com/user-attachments/assets/830eb91b-ab79-4526-a90a-943692841578" />
+
 
 Five unique commands identified (hex-decoded):
 
@@ -301,7 +305,8 @@ index=attack_data sourcetype=auditd type=PROCTITLE
 | table _time, proctitle | sort _time | head 30
 ```
 
-📸 ![Command Sequence](screenshots/privesc/25_command_sequence.png)
+<img width="957" height="377" alt="24" src="https://github.com/user-attachments/assets/1cfb90bf-0dae-43d4-a5f7-c498254ba560" />
+
 
 Every one of the first 10 events (executed within 32 milliseconds) was `sudo systemctl status auditd.service`. **Attacker reconned defenses before acting** — professional methodology, and the microsecond intervals confirmed fully automated execution.
 
@@ -312,7 +317,8 @@ index=attack_data sourcetype=auditd type=PROCTITLE
 | stats count by _time, proctitle | sort _time
 ```
 
-📸 ![Phase Timeline](screenshots/privesc/26_phase_timeline.png)
+<img width="958" height="326" alt="25" src="https://github.com/user-attachments/assets/ba809697-cf11-4c29-a532-683fb9b3eb98" />
+
 
 Revealed the complete 36-minute attack sequence:
 
@@ -339,7 +345,8 @@ index=attack_data sourcetype=auditd type=PROCTITLE
 | timechart span=30s count by technique useother=f
 ```
 
-📸 ![Kill Chain Visualization](screenshots/privesc/28_kill_chain_chart.png)
+<img width="958" height="381" alt="27" src="https://github.com/user-attachments/assets/723093ec-5539-49c9-98c0-bd54c3ec157f" />
+
 
 **Critical finding — dual redundant persistence:** The attacker established TWO independent backdoors (SUID bit on `vuln` AND capability grant on `priv_esc`). If a defender discovers and removes ONE, the OTHER remains active. Incident response that only addresses one leaves the attacker with root access via the other.
 
